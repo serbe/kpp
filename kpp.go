@@ -1,13 +1,12 @@
 package kpp
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 const (
@@ -22,7 +21,7 @@ type KP struct {
 	IMDb      float64
 }
 
-func UrlEncoded(str string) (string, error) {
+func urlEncoded(str string) (string, error) {
 	u, err := url.Parse(str)
 	if err != nil {
 		return "", err
@@ -30,58 +29,36 @@ func UrlEncoded(str string) (string, error) {
 	return u.String(), nil
 }
 
-// GetRating - получение рейтингов
-func GetRating(name string, year int64) (KP, error) {
-	url := strings.Replace(string, " ", "+", -1)
-	resp, err := http.Get(apiURL + "/configuration?api_key=" + tmdb.apiKey)
+func getHTML(name string, year int64) ([]byte, error) {
+	var body []byte
+	url, err := urlEncoded(apiURL + strings.Replace(name, " ", "+", -1) + "+" + fmt.Sprintf("%d", year) + "/")
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return body, err
 	}
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Status Code %d received from TMDb", resp.StatusCode)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
+	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return body, err
 	}
-	err = json.Unmarshal(body, &config)
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return body, err
 	}
-	tmdb.config = config
+	buffer := bytes.NewBufferString("")
+	for _, char := range body {
+		var ch = Utf(char)
+		fmt.Fprintf(buffer, "%c", ch)
+	}
+	doc := buffer.Bytes()
+	return doc, nil
 }
 
-// GetByName get data from themoviedb by name
-func (tmdb *TMDB) GetByName(movieName string, year string) (tmdbResult, error) {
-	tmdb.getConfig()
-	time.Sleep(1 * time.Second)
-	var response = &tmdbResponse{}
-	if year != "" {
-		year = "&year=" + year
-	}
-	queryString := apiURL + "/search/movie?api_key=" + tmdb.apiKey + "&language=ru&query=" + url.QueryEscape(movieName) + year
-	resp, err := http.Get(queryString)
+// GetRating - получение рейтингов
+func GetRating(name string, year int64) (KP, error) {
+	var kp KP
+	body, err := getHTML(name, year)
 	if err != nil {
-		return tmdbResult{}, err
+		return kp, err
 	}
-	if resp.StatusCode != 200 {
-		fmt.Println(resp.Header)
-		return tmdbResult{}, fmt.Errorf("Status Code %d received from TMDb", resp.StatusCode)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return tmdbResult{}, err
-	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return tmdbResult{}, err
-	}
-	if len(response.Results) == 0 {
-		return tmdbResult{}, err
-	}
-	response.Results[0].Poster_base_url = tmdb.config.Images.Base_url
-	return response.Results[0], err
+	fmt.Println(string(body))
+	return kp, nil
 }
