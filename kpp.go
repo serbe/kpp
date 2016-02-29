@@ -50,9 +50,24 @@ func getHTML(url string) ([]byte, error) {
 	return doc, nil
 }
 
+func getHref(body []byte, reStr string) (string, error) {
+	var href string
+	reHref := regexp.MustCompile(reStr)
+	if reHref.Match(body) == true {
+		findHref := reHref.FindSubmatch(body)
+		href = string(findHref[1])
+	} else {
+		return href, fmt.Errorf("href not found")
+	}
+	return href, nil
+}
+
 // GetRating - получение рейтингов
-func GetRating(name string, year int64) (KP, error) {
-	var kp KP
+func GetRating(name string, engName string, year int64) (KP, error) {
+	var (
+		kp   KP
+		href string
+	)
 	yearStr := fmt.Sprintf("%d", year)
 	url, err := urlEncoded(apiURL + strings.Replace(name, " ", "+", -1) + "+" + yearStr + "/view/movie/")
 	if err != nil {
@@ -64,24 +79,30 @@ func GetRating(name string, year int64) (KP, error) {
 	}
 	findStr := regexp.QuoteMeta(name)
 	findStr = `(?i)href="(http://m.kinopoisk.ru/movie/\d+?/)">` + findStr + `(?: \(ТВ\),|,) ` + yearStr + `<\/a>`
-	reHref := regexp.MustCompile(findStr)
+	href, err = getHref(body, findStr)
+	if err != nil {
+		if engName != "" {
+			findStr = regexp.QuoteMeta(engName)
+			findStr = `(?i)href="(http://m.kinopoisk.ru/movie/\d+?/)">.+?(?: \(ТВ\),|,) ` + yearStr + `<\/a><br />` + findStr + `&nbsp;</span>`
+		}
+	}
+	href, err = getHref(body, findStr)
+	if err != nil {
+		return kp, err
+	}
 	reK := regexp.MustCompile(`<b>рейтинг фильма:</b>.*?<i>(.*?)</i>`)
 	reI := regexp.MustCompile(`<b>рейтинг IMDB:</b>.*?<i>(.*?)</i>`)
-	if reHref.Match(body) == true {
-		findHref := reHref.FindSubmatch(body)
-		href := string(findHref[1])
-		body, err = getHTML(href)
-		if err != nil {
-			return kp, err
-		}
-		if reK.Match(body) == true {
-			kindK := reK.FindSubmatch(body)
-			kp.Kinopoisk, _ = strconv.ParseFloat(string(kindK[1]), 64)
-		}
-		if reI.Match(body) == true {
-			kindI := reI.FindSubmatch(body)
-			kp.IMDb, _ = strconv.ParseFloat(string(kindI[1]), 64)
-		}
+	body, err = getHTML(href)
+	if err != nil {
+		return kp, err
+	}
+	if reK.Match(body) == true {
+		kindK := reK.FindSubmatch(body)
+		kp.Kinopoisk, _ = strconv.ParseFloat(string(kindK[1]), 64)
+	}
+	if reI.Match(body) == true {
+		kindI := reI.FindSubmatch(body)
+		kp.IMDb, _ = strconv.ParseFloat(string(kindI[1]), 64)
 	}
 	return kp, nil
 }
