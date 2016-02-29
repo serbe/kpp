@@ -62,8 +62,8 @@ func GetRating(name string, year int64) (KP, error) {
 	if err != nil {
 		return kp, err
 	}
-	resultStr := name + ", " + yearStr
-	reHref := regexp.MustCompile(`<a href="(.*?)">` + resultStr + `<\/a>`)
+	findStr := regexp.QuoteMeta(name + ", " + yearStr)
+	reHref := regexp.MustCompile(`<a href="(.*?)">` + findStr + `<\/a>`)
 	reK := regexp.MustCompile(`<b>рейтинг фильма:</b>.*?<i>(.*?)</i>`)
 	reI := regexp.MustCompile(`<b>рейтинг IMDB:</b>.*?<i>(.*?)</i>`)
 	if reHref.Match(body) == true {
