@@ -18,9 +18,11 @@ const (
 // KP values:
 // Kinopoisk - рейтинг кинопоиска
 // IMDB      - рейтинг IMDb
+// Duration  - продолжительность фильма
 type KP struct {
 	Kinopoisk float64
 	IMDb      float64
+	Duration  string
 }
 
 func urlEncoded(str string) (string, error) {
@@ -92,6 +94,7 @@ func GetRating(name string, engName string, year int64) (KP, error) {
 	}
 	reK := regexp.MustCompile(`<b>рейтинг фильма:</b>.*?<i>(.*?)</i>`)
 	reI := regexp.MustCompile(`<b>рейтинг IMDB:</b>.*?<i>(.*?)</i>`)
+	reD := regexp.MustCompile(`<span>.+?` + yearStr + `,\s(\d{2,3})\sмин.</span>`)
 	body, err = getHTML(href)
 	if err != nil {
 		return kp, err
@@ -103,6 +106,10 @@ func GetRating(name string, engName string, year int64) (KP, error) {
 	if reI.Match(body) == true {
 		kindI := reI.FindSubmatch(body)
 		kp.IMDb, _ = strconv.ParseFloat(string(kindI[1]), 64)
+	}
+	if reD.Match(body) == true {
+		kindD := reD.FindSubmatch(body)
+		kp.Duration = string(kindD[1])
 	}
 	return kp, nil
 }
