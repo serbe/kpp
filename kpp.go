@@ -102,14 +102,24 @@ func GetRating(name string, engName string, year int64) (KP, error) {
 	if reK.Match(body) == true {
 		kindK := reK.FindSubmatch(body)
 		kp.Kinopoisk, _ = strconv.ParseFloat(string(kindK[1]), 64)
+		kp.Kinopoisk = round(kp.Kinopoisk, 1)
 	}
 	if reI.Match(body) == true {
 		kindI := reI.FindSubmatch(body)
 		kp.IMDb, _ = strconv.ParseFloat(string(kindI[1]), 64)
+		kp.IMDb = round(kp.IMDb, 1)
 	}
 	if reD.Match(body) == true {
 		kindD := reD.FindSubmatch(body)
 		kp.Duration = string(kindD[1])
 	}
 	return kp, nil
+}
+
+func round(v float64, decimals int) float64 {
+	var pow float64 = 1
+	for i := 0; i < decimals; i++ {
+		pow *= 10
+	}
+	return float64(int((v*pow)+0.5)) / pow
 }
