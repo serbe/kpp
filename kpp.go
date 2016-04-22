@@ -65,7 +65,7 @@ func getHref(body []byte, reStr string) (string, error) {
 }
 
 // GetRating - получение рейтингов
-func GetRating(name string, engName string, year int64) (KP, error) {
+func GetRating(name string, engName string, year int) (KP, error) {
 	var (
 		kp   KP
 		href string
