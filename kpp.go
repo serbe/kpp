@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	apiURL = "http://m.kinopoisk.ru/search/"
+	apiURL = "https://m.kinopoisk.ru/search/"
 )
 
 // KP values:
@@ -85,12 +85,12 @@ func GetRating(name string, engName string, year int) (KP, error) {
 		return kp, err
 	}
 	findStr := regexp.QuoteMeta(name)
-	findStr = `(?i)href="(http://m.kinopoisk.ru/movie/\d+?/)">` + findStr + `(?: \(ТВ\),|,) ` + yearStr + `<\/a>`
+	findStr = `(?i)href="(https://m.kinopoisk.ru/movie/\d+?/)">` + findStr + `(?: \(ТВ\),|,) ` + yearStr + `<\/a>`
 	href, err = getHref(body, findStr)
 	if err != nil {
 		if engName != "" {
 			findStr = regexp.QuoteMeta(engName)
-			findStr = `(?i)href="(http://m.kinopoisk.ru/movie/\d+?/)">.+?(?: \(ТВ\),|,) ` + yearStr + `<\/a><br />` + findStr + `&nbsp;</span>`
+			findStr = `(?i)href="(https://m.kinopoisk.ru/movie/\d+?/)">.+?(?: \(ТВ\),|,) ` + yearStr + `<\/a><br />` + findStr + `&nbsp;</span>`
 		}
 	}
 	href, err = getHref(body, findStr)
