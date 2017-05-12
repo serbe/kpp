@@ -36,7 +36,7 @@ func urlEncoded(str string) (string, error) {
 
 func getHTML(url string) ([]byte, error) {
 	var body []byte
-	timeout := time.Duration(5 * time.Second)
+	timeout := time.Duration(5) * time.Second
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -60,7 +60,7 @@ func getHTML(url string) ([]byte, error) {
 func getHref(body []byte, reStr string) (string, error) {
 	var href string
 	reHref := regexp.MustCompile(reStr)
-	if reHref.Match(body) == true {
+	if reHref.Match(body) {
 		findHref := reHref.FindSubmatch(body)
 		href = string(findHref[1])
 	} else {
@@ -86,7 +86,7 @@ func GetRating(name string, engName string, year int) (KP, error) {
 	}
 	findStr := regexp.QuoteMeta(name)
 	findStr = `(?i)href="(https://m.kinopoisk.ru/movie/\d+?/)">` + findStr + `(?: \(ТВ\),|,) ` + yearStr + `<\/a>`
-	href, err = getHref(body, findStr)
+	_, err = getHref(body, findStr)
 	if err != nil {
 		if engName != "" {
 			findStr = regexp.QuoteMeta(engName)
@@ -104,17 +104,17 @@ func GetRating(name string, engName string, year int) (KP, error) {
 	if err != nil {
 		return kp, err
 	}
-	if reK.Match(body) == true {
+	if reK.Match(body) {
 		kindK := reK.FindSubmatch(body)
 		kp.Kinopoisk, _ = strconv.ParseFloat(string(kindK[1]), 64)
 		kp.Kinopoisk = round(kp.Kinopoisk, 1)
 	}
-	if reI.Match(body) == true {
+	if reI.Match(body) {
 		kindI := reI.FindSubmatch(body)
 		kp.IMDb, _ = strconv.ParseFloat(string(kindI[1]), 64)
 		kp.IMDb = round(kp.IMDb, 1)
 	}
-	if reD.Match(body) == true {
+	if reD.Match(body) {
 		kindD := reD.FindSubmatch(body)
 		kp.Duration = string(kindD[1])
 	}
